@@ -1,0 +1,18 @@
+{
+  "name": "go-todo-react",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev:back": "cd ./back && go run .",
+    "dev:front": "cd ./web && npm run dev",
+    "dev": "concurrently \"npm run dev:back\" \"npm run dev:front\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
