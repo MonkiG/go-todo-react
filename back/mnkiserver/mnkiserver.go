@@ -11,13 +11,28 @@ import (
 
 type RoutesMapper map[string]RouteHandler
 
+type cors struct {
+	allowed bool
+	origins []string
+	methods string
+	headers string
+}
 type MnkiServer struct {
 	Port         uint
 	Addr         string
 	RoutesMapper RoutesMapper
+	cors         *cors
 }
 
 func (ms *MnkiServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if ms.cors.allowed {
+		for _, o := range ms.cors.origins {
+			w.Header().Set("Access-Control-Allow-Origin", o)
+		}
+		w.Header().Set("Access-Control-Allow-Methods", ms.cors.methods)
+		w.Header().Set("Access-Control-Allow-Headers", ms.cors.headers)
+	}
+
 	method := r.Method
 	endpoint := r.URL.Path
 
@@ -56,6 +71,13 @@ func (ms *MnkiServer) matchPattern(pattern string, path string) map[string]strin
 	return params
 }
 
+func (ms *MnkiServer) UseCors(allowedOrigins []string, allowedMethods string, allowedHeaders string) {
+	ms.cors.allowed = true
+	ms.cors.origins = allowedOrigins
+	ms.cors.methods = allowedMethods
+	ms.cors.headers = allowedHeaders
+}
+
 func New(port uint) *MnkiServer {
 	parsedAddr := fmt.Sprintf("localhost:%d", port)
 	return &MnkiServer{
@@ -67,6 +89,12 @@ func New(port uint) *MnkiServer {
 			"PUT":    make(RouteHandler),
 			"PATCH":  make(RouteHandler),
 			"DELETE": make(RouteHandler),
+		},
+		cors: &cors{
+			allowed: false,
+			methods: "",
+			origins: nil,
+			headers: "",
 		},
 	}
 }
