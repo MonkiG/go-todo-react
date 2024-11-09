@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/MonkiG/go-todo-react/back/response"
 )
@@ -16,26 +17,43 @@ type MnkiServer struct {
 	RoutesMapper RoutesMapper
 }
 
-func (sg *MnkiServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (ms *MnkiServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	method := r.Method
 	endpoint := r.URL.Path
 
 	log.Printf(": [%s] \"%s\"", method, endpoint)
-	_, ok := sg.RoutesMapper[method]
+	routes, ok := ms.RoutesMapper[method]
 
 	if !ok {
 		response.JSON(w, http.StatusMethodNotAllowed, map[string]string{"message": "Method not allowed"})
 		return
 	}
 
-	_, ok = sg.RoutesMapper[method][endpoint]
-
-	if !ok {
-		response.JSON(w, http.StatusNotFound, map[string]string{"message": "Route not found"})
+	for k, handler := range routes {
+		params := ms.matchPattern(k, endpoint)
+		handler(r, w, params)
 		return
 	}
+}
 
-	sg.RoutesMapper[method][endpoint](r, w)
+// Method that validates the params of the routes
+func (ms *MnkiServer) matchPattern(pattern string, path string) map[string]string {
+	patternSplitted := strings.Split(pattern, "/")
+	pathSplitted := strings.Split(path, "/")
+	params := make(map[string]string)
+
+	if (len(patternSplitted) != len(pathSplitted)) || (path == "/" && pattern != "/") {
+		return params
+	}
+
+	for i, part := range patternSplitted {
+		if strings.HasPrefix(part, ":") {
+			paramName := part[1:]
+			params[paramName] = pathSplitted[i]
+		}
+	}
+
+	return params
 }
 
 func New(port uint) *MnkiServer {
@@ -47,12 +65,13 @@ func New(port uint) *MnkiServer {
 			"GET":    make(RouteHandler),
 			"POST":   make(RouteHandler),
 			"PUT":    make(RouteHandler),
+			"PATCH":  make(RouteHandler),
 			"DELETE": make(RouteHandler),
 		},
 	}
 }
-func (sg *MnkiServer) Run() {
-	log.Println("Listening in " + sg.Addr)
-	log.Fatal(http.ListenAndServe(sg.Addr, sg))
+func (ms *MnkiServer) Run() {
+	log.Println("Listening in " + ms.Addr)
+	log.Fatal(http.ListenAndServe(ms.Addr, ms))
 
 }

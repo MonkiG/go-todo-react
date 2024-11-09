@@ -12,7 +12,7 @@ func main() {
 	srv := mnkiserver.New(8080)
 	db := make([]string, 0)
 
-	srv.Get("/", func(req *http.Request, res http.ResponseWriter) {
+	srv.Get("/", func(req *http.Request, res http.ResponseWriter, params map[string]string) {
 		response.JSON(res, 200, map[string]string{"message": "Hello, world!"})
 	})
 
