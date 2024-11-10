@@ -16,3 +16,7 @@ func JSON(w http.ResponseWriter, status int, data interface{}) {
 		http.Error(w, "Error al procesar la respuesta JSON", http.StatusInternalServerError)
 	}
 }
+
+func NoContent(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusNoContent)
+}
