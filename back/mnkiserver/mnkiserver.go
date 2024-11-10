@@ -45,30 +45,38 @@ func (ms *MnkiServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for k, handler := range routes {
-		params := ms.matchPattern(k, endpoint)
-		handler(r, w, params)
-		return
-	}
-}
-
-// Method that validates the params of the routes
-func (ms *MnkiServer) matchPattern(pattern string, path string) map[string]string {
-	patternSplitted := strings.Split(pattern, "/")
-	pathSplitted := strings.Split(path, "/")
-	params := make(map[string]string)
-
-	if (len(patternSplitted) != len(pathSplitted)) || (path == "/" && pattern != "/") {
-		return params
-	}
-
-	for i, part := range patternSplitted {
-		if strings.HasPrefix(part, ":") {
-			paramName := part[1:]
-			params[paramName] = pathSplitted[i]
+		match := ms.matchPattern(r, k, endpoint)
+		if match {
+			handler(r, w)
+			return
 		}
 	}
 
-	return params
+	response.JSON(w, http.StatusNotFound, map[string]string{"message": "Route not found"})
+}
+
+// Method that validates the params of the routes
+func (ms *MnkiServer) matchPattern(r *http.Request, pattern string, path string) bool {
+	patternSplitted := strings.Split(pattern, "/")
+	pathSplitted := strings.Split(path, "/")
+	// params := make(map[string]string)
+
+	if len(patternSplitted) != len(pathSplitted) {
+		return false
+	}
+
+	for i, part := range patternSplitted {
+		if strings.HasPrefix(part, "{") && strings.HasSuffix(part, "}") {
+			paramName := part[1 : len(part)-1]
+			paramValue := pathSplitted[i]
+			r.SetPathValue(paramName, paramValue)
+			continue
+		} else if part != pathSplitted[i] {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (ms *MnkiServer) UseCors(allowedOrigins []string, allowedMethods string, allowedHeaders string) {
