@@ -23,11 +23,11 @@ func main() {
 	todoHandler := &handlers.TodoHandler{
 		Db: db,
 	}
-	srv.Get("/todo", todoHandler.GetAll)
-	srv.Get("/todo/{id}", todoHandler.GetById)
-	srv.Post("/todo", todoHandler.Create)
-	srv.Patch("/todo/{id}", todoHandler.Update)
-	srv.Delete("/todo/{id}", todoHandler.Delete)
+	srv.Get("/api/v1/todo", todoHandler.GetAll)
+	srv.Get("/api/v1/todo/{id}", todoHandler.GetById)
+	srv.Post("/api/v1/todo", todoHandler.Create)
+	srv.Patch("/api/v1/todo/{id}", todoHandler.Update)
+	srv.Delete("/api/v1/todo/{id}", todoHandler.Delete)
 
 	srv.Run()
 }
